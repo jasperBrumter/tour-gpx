@@ -7,7 +7,10 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # This repo's default branch is master. Both are listed so a later rename
+    # to main doesn't silently stop deployments — a workflow that never
+    # triggers looks identical to one that has nothing to do.
+    branches: [master, main]
   workflow_dispatch:
 
 permissions:
