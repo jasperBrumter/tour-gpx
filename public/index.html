@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Komoot to GPX — Download a Komoot Tour as a GPX File</title>
+  <meta name="description" content="Paste a Komoot tour link and download the full track as a GPX file for Garmin, Wahoo, Strava, or any GPS device. No account, and nothing is stored." />
+  <link rel="canonical" href="{{ORIGIN}}/" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#1b241f" />
+  <meta name="application-name" content="Tour to GPX" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Tour to GPX" />
+  <meta property="og:title" content="Komoot to GPX — Download a Komoot Tour as a GPX File" />
+  <meta property="og:description" content="Paste a Komoot tour link and download the full track as a GPX file for Garmin, Wahoo, Strava, or any GPS device. Nothing is stored." />
+  <meta property="og:url" content="{{ORIGIN}}/" />
+  <meta property="og:locale" content="en" />
+  <meta property="og:image" content="{{ORIGIN}}/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Tour to GPX — a GPS track drawn above the words Tour to GPX." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Komoot to GPX — Download a Komoot Tour as a GPX File" />
+  <meta name="twitter:description" content="Paste a Komoot tour link and download the full track as a GPX file. Nothing is stored." />
+  <meta name="twitter:image" content="{{ORIGIN}}/og-image.png" />
+  <meta name="twitter:image:alt" content="Tour to GPX — a GPS track drawn above the words Tour to GPX." />
+
+  <link rel="preload" href="/fonts/karla-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/fjalla-one-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="/style.css" />
+
+  <script type="application/ld+json" nonce="{{NONCE}}">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Tour to GPX",
+    "url": "{{ORIGIN}}/",
+    "description": "Convert a Komoot tour link into a GPX file you can load onto a Garmin, Wahoo, or other GPS device.",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript.",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the converter</a>
+
+  <svg class="terrain" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <g class="terrain__contours">
+      <circle cx="240" cy="240" r="150" />
+      <circle cx="240" cy="240" r="205" />
+      <circle cx="240" cy="240" r="265" />
+      <circle cx="240" cy="240" r="325" />
+      <circle cx="1020" cy="600" r="120" />
+      <circle cx="1020" cy="600" r="180" />
+      <circle cx="1020" cy="600" r="240" />
+    </g>
+  </svg>
+
+  <div class="trace" aria-hidden="true">
+    <svg class="trace__svg" viewBox="0 0 1200 80" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <polyline class="trace__line" points="10,62 46,66 82,58 118,48 154,34 190,22 226,16 262,24 298,20 334,30 370,44 406,56 442,64 478,67 514,60 550,46 586,30 622,18 658,13 694,22 730,34 766,28 802,40 838,54 874,63 910,66 946,58 982,44 1018,30 1054,20 1090,14 1126,26 1162,38 1190,30" />
+      <g class="trace__points">
+        <circle cx="10" cy="62" r="2.2" />
+        <circle cx="46" cy="66" r="2.2" />
+        <circle cx="82" cy="58" r="2.2" />
+        <circle cx="118" cy="48" r="2.2" />
+        <circle cx="154" cy="34" r="2.2" />
+        <circle cx="190" cy="22" r="2.2" />
+        <circle cx="226" cy="16" r="2.2" />
+        <circle cx="262" cy="24" r="2.2" />
+        <circle cx="298" cy="20" r="2.2" />
+        <circle cx="334" cy="30" r="2.2" />
+        <circle cx="370" cy="44" r="2.2" />
+        <circle cx="406" cy="56" r="2.2" />
+        <circle cx="442" cy="64" r="2.2" />
+        <circle cx="478" cy="67" r="2.2" />
+        <circle cx="514" cy="60" r="2.2" />
+        <circle cx="550" cy="46" r="2.2" />
+        <circle cx="586" cy="30" r="2.2" />
+        <circle cx="622" cy="18" r="2.2" />
+        <circle cx="658" cy="13" r="2.2" />
+        <circle cx="694" cy="22" r="2.2" />
+        <circle cx="730" cy="34" r="2.2" />
+        <circle cx="766" cy="28" r="2.2" />
+        <circle cx="802" cy="40" r="2.2" />
+        <circle cx="838" cy="54" r="2.2" />
+        <circle cx="874" cy="63" r="2.2" />
+        <circle cx="910" cy="66" r="2.2" />
+        <circle cx="946" cy="58" r="2.2" />
+        <circle cx="982" cy="44" r="2.2" />
+        <circle cx="1018" cy="30" r="2.2" />
+        <circle cx="1054" cy="20" r="2.2" />
+        <circle cx="1090" cy="14" r="2.2" />
+        <circle cx="1126" cy="26" r="2.2" />
+        <circle cx="1162" cy="38" r="2.2" />
+        <circle cx="1190" cy="30" r="2.2" />
+      </g>
+    </svg>
+  </div>
+
+  <main class="post" id="main">
+    <header class="post__head">
+      <h1>Tour to GPX</h1>
+      <p class="post__sub">Paste a Komoot tour link. Download a GPX file that your GPS device can read.</p>
+    </header>
+
+    <form id="convert-form" class="post__form" novalidate>
+      <label for="url" class="field-label">Komoot tour link</label>
+      <input
+        id="url"
+        name="url"
+        type="url"
+        inputmode="url"
+        placeholder="https://www.komoot.com/tour/123456789"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        enterkeyhint="go"
+        aria-describedby="url-hint status"
+        required
+      />
+      <p id="url-hint" class="field-hint">
+        Works with komoot.com and komoot.de tour links, including short share links.
+      </p>
+      <button id="submit" type="submit">Get GPX</button>
+    </form>
+
+    <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+
+    <noscript>
+      <p class="noscript">
+        This converter needs JavaScript to fetch the tour and hand you the file.
+        Please enable it, then reload the page.
+      </p>
+    </noscript>
+
+    <aside class="privacy">
+      <h2 class="privacy__title">Your Privacy Matters</h2>
+      <p>Nothing is stored. Your link is used once, then discarded. No accounts, no cookies, no tracking.</p>
+    </aside>
+  </main>
+
+  <footer class="marker">
+    <p>GPX files open in Garmin Connect, Wahoo, Strava, Maps.me, and most GPS devices</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

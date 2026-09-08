@@ -1,0 +1,368 @@
+/* Self-hosted fonts (both SIL OFL, redistribution is permitted).
+   Previously these came from Google Fonts, which cost two extra DNS + TLS
+   handshakes before the first byte of a font could arrive — that round trip
+   is what produced the flash on a cold load.
+
+   font-display: optional is the part that actually removes the flash. It
+   gives the browser a ~100ms window: if the font isn't ready it renders the
+   fallback and keeps it for that page load, so text is never re-drawn mid-
+   view. Combined with same-origin preloading the real font almost always
+   wins that race, and on the rare miss the metric-matched fallbacks below
+   keep the layout identical. */
+
+@font-face {
+  font-family: 'Fjalla One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+  src: url('/fonts/fjalla-one-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Karla ships as a variable font, so one file covers the whole 400-700 range
+   we use — declaring the range here rather than shipping two static cuts. */
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: optional;
+  src: url('/fonts/karla-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: optional;
+  src: url('/fonts/karla-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Metric-matched fallbacks. size-adjust makes the substitute's advance
+   widths match the real face, so if `optional` ever falls back, line breaks
+   and block heights are identical — the page doesn't move. Values measured
+   from the real fonts against Arial, not guessed. */
+
+@font-face {
+  font-family: 'Karla Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Liberation Sans');
+  size-adjust: 90.82%;
+  ascent-override: 99.10%;
+  descent-override: 27.53%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Fjalla Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Liberation Sans');
+  size-adjust: 83.50%;
+  ascent-override: 120.96%;
+  descent-override: 29.94%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --font-body: 'Karla', 'Karla Fallback', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-display: 'Fjalla One', 'Fjalla Fallback', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --bg: #1b241f;
+  --surface: #212c26;
+  --line: #34433a;
+  --text: #ece5d6;
+  --text-muted: #93a396;
+  --brass: #c99a3e;
+  --brass-dim: #8f7333;
+  /* Lightened from #6b8f71, which fell to 4.39:1 on --bg — just under
+     the 4.5:1 AA floor for the status line and the privacy heading. */
+  --moss: #74997a;
+  --rust: #c1603b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Two background layers, split for readability. The contours stay
+   full-bleed behind everything — they're faint enough to sit under text.
+   The trace does not: it's the one high-contrast element, so it gets its
+   own band above the content rather than running behind it. */
+.terrain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.terrain__contours circle {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
+/* In normal flow, not fixed. On short viewports the heading sits as
+   little as 32px from the top, so any fixed band would eventually land
+   on the copy. Taking up real layout space makes overlap impossible. */
+.trace {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 100%;
+  height: 132px;
+  overflow: hidden;
+}
+
+.trace__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trace__line {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+/* Hollow nodes: the background colour fills them so the line is visibly
+   interrupted at each point, the way a plotted GPX looks. */
+.trace__points circle {
+  fill: var(--bg);
+  stroke: var(--brass);
+  stroke-width: 1.15;
+  opacity: 0.8;
+}
+
+/* Keyboard users land here first: the page opens with two decorative SVGs
+   and a form, so a skip link saves tabbing past them. Visible only on focus. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  background: var(--brass);
+  color: #1b241f;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 0 0 3px 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+.field-hint {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.noscript {
+  margin: 16px 0 0;
+  border-left: 3px solid var(--rust);
+  padding-left: 16px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.post {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.post__head {
+  border-left: 3px solid var(--brass);
+  padding-left: 20px;
+  margin-bottom: 40px;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 2.6rem;
+  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.post__sub {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 46ch;
+}
+
+.post__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 24px;
+  border-radius: 4px;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+input[type='url'] {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 12px 14px;
+  border-radius: 3px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input[type='url']:focus-visible {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(201, 154, 62, 0.25);
+}
+
+input[type='url'][aria-invalid='true'] {
+  border-color: var(--rust);
+}
+
+.skip-link:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+button {
+  align-self: flex-start;
+  margin-top: 8px;
+  background: var(--brass);
+  color: #1b241f;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+button:hover {
+  background: #dcae52;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  background: var(--brass-dim);
+  cursor: progress;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 16px 0 0;
+  font-size: 0.95rem;
+}
+
+.status[data-state='error'] {
+  color: var(--rust);
+}
+
+.status[data-state='ok'] {
+  color: var(--moss);
+}
+
+/* Privacy note. Uses the same brass rule as the page header so it reads
+   as a stated commitment rather than boilerplate fine print. */
+.privacy {
+  border-left: 3px solid var(--moss);
+  padding-left: 20px;
+  margin-top: 32px;
+}
+
+.privacy__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--moss);
+  margin: 0 0 6px;
+}
+
+.privacy p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  max-width: 54ch;
+}
+
+.marker {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--line);
+  padding: 16px 24px;
+  text-align: center;
+}
+
+.marker span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2.1rem;
+  }
+  .post {
+    padding: 32px 18px;
+  }
+  .trace {
+    height: 96px;
+  }
+}

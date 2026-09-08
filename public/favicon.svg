@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A GPX track in miniature, matching the site's palette. Solid nodes
+       rather than the hollow ones in the page header: at 16px a 1px ring
+       fills in and the point turns to mush. -->
+  <rect width="32" height="32" rx="7" fill="#1b241f"/>
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" rx="6.25" fill="none" stroke="#34433a" stroke-width="1.5"/>
+  <polyline points="6,23 12,13 19,19 26,8" fill="none" stroke="#c99a3e"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="6"  cy="23" r="2.7" fill="#74997a"/>
+  <circle cx="12" cy="13" r="2.4" fill="#c99a3e"/>
+  <circle cx="19" cy="19" r="2.4" fill="#c99a3e"/>
+  <circle cx="26" cy="8"  r="2.7" fill="#c1603b"/>
+</svg>
