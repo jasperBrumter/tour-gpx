@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jasperbrumter.github.io/tour-gpx/sitemap.xml

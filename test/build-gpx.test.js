@@ -5,14 +5,16 @@
 // parseTourId to catch regressions in the parts we CAN check.
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { buildGpx } from '../lib/gpx.js';
-import { SourceError } from '../lib/errors.js';
-import { parseTourId, resolveShareLink } from '../lib/komoot.js';
+import { buildGpx } from '../public/lib/gpx.js';
+import { SourceError } from '../public/lib/errors.js';
+import { parseTourId, resolveShareLink } from '../public/lib/komoot.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -261,5 +263,78 @@ if (hasXmllint()) {
 } else {
   console.log('  skip - GPX schema validation (xmllint not installed)');
 }
+
+/**
+ * The page ships its CSP in a <meta> tag because GitHub Pages cannot set
+ * response headers, and the inline JSON-LD block is allowed by hash. Edit the
+ * JSON-LD without recomputing the hash and the block is silently blocked in
+ * production, which no local check would otherwise catch.
+ */
+test('the CSP hash matches the inline JSON-LD block', () => {
+  const html = readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  const ld = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(ld, 'no JSON-LD block found');
+  JSON.parse(ld[1]);
+
+  const actual = createHash('sha256').update(ld[1]).digest('base64');
+  const declared = html.match(/'sha256-([A-Za-z0-9+/=]+)'/);
+  assert.ok(declared, 'no script hash in the meta CSP');
+  assert.equal(
+    declared[1],
+    actual,
+    'JSON-LD changed without updating the CSP hash in index.html (and server.js)'
+  );
+});
+
+test('server.js declares the same script hash as the page', () => {
+  const html = readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  const server = readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const inHtml = html.match(/'sha256-([A-Za-z0-9+/=]+)'/)[1];
+  const inServer = server.match(/sha256-([A-Za-z0-9+/=]+)/);
+  assert.ok(inServer, 'server.js has no script hash in its CSP');
+  assert.equal(inServer[1], inHtml, 'server.js and index.html CSP hashes have drifted');
+});
+
+test('no absolute asset paths — they 404 on a project-site subpath', () => {
+  // GitHub Pages serves this at /tour-gpx/, so href="/style.css" resolves to
+  // the domain root and misses.
+  for (const file of ['index.html', '404.html']) {
+    const html = readFileSync(path.join(__dirname, '..', 'public', file), 'utf8');
+    const absolute = html.match(/(?:href|src)="\/(?!\/)[^"]*"/g) || [];
+    assert.deepEqual(absolute, [], `${file} has root-absolute asset paths: ${absolute.join(', ')}`);
+  }
+});
+
+test('no absolute url() in the stylesheet — fonts 404 on a subpath', () => {
+  // The HTML paths and the CSS paths are separate: fixing one and not the
+  // other silently drops back to the fallback fonts on GitHub Pages, which is
+  // exactly what happened the first time.
+  const css = readFileSync(path.join(__dirname, '..', 'public', 'style.css'), 'utf8');
+  const absolute = css.match(/url\(['"]?\/(?!\/)[^)]*\)/g) || [];
+  assert.deepEqual(absolute, [], `style.css has root-absolute urls: ${absolute.join(', ')}`);
+});
+
+test('every asset referenced by the page exists on disk', () => {
+  // Catches a renamed or missing file before it 404s in production.
+  const pub = path.join(__dirname, '..', 'public');
+  const html = readFileSync(path.join(pub, 'index.html'), 'utf8');
+  const css = readFileSync(path.join(pub, 'style.css'), 'utf8');
+  const refs = [
+    ...[...html.matchAll(/(?:href|src)="([^"#:]+)"/g)].map((m) => m[1]),
+    ...[...css.matchAll(/url\(['"]?([^)'"]+)['"]?\)/g)].map((m) => m[1]),
+  ].filter((r) => !r.startsWith('http') && !r.startsWith('data:'));
+
+  assert.ok(refs.length > 5, 'expected to find asset references');
+  for (const ref of new Set(refs)) {
+    assert.ok(existsSync(path.join(pub, ref)), `referenced asset is missing: ${ref}`);
+  }
+});
+
+test('no unsubstituted template placeholders remain', () => {
+  for (const file of ['index.html', '404.html']) {
+    const html = readFileSync(path.join(__dirname, '..', 'public', file), 'utf8');
+    assert.ok(!html.includes('{{'), `${file} still contains a {{placeholder}}`);
+  }
+});
 
 console.log('\nDone.');

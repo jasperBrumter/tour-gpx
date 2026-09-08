@@ -122,3 +122,17 @@ export function escapeXml(str) {
     '"': '&quot;',
   })[c]);
 }
+
+/**
+ * Filename for a downloaded tour. Lives here rather than in the server so the
+ * browser build names files identically.
+ */
+export function gpxFilename(name) {
+  const slug =
+    String(name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'tour';
+  return `${slug}.gpx`;
+}

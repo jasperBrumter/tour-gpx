@@ -74,52 +74,62 @@ returning empty tracks:
    fixture) and extend `test/build-gpx.test.js` so the fix is covered going
    forward.
 
-## Running it on a real domain
+## Deployment
 
-Set `SITE_URL` to the site's public origin, with no trailing slash:
+The site is **static** and published to GitHub Pages from `public/` by
+`.github/workflows/pages.yml` on every push to `main`. There is no build step:
+what you serve locally is byte-for-byte what ships.
 
-    SITE_URL=https://your-domain.example NODE_ENV=production npm start
+**One-time setup:** repo Settings → Pages → Source → **GitHub Actions**.
+Without that the workflow runs green and nothing is served.
 
-`server.js` renders `public/index.html` per request, substituting `{{ORIGIN}}`
-into the canonical link, the Open Graph and Twitter URLs, and the JSON-LD
-block, plus a fresh CSP nonce into `{{NONCE}}`. Absolute URLs are mandatory
-there — a relative `og:image` is ignored by every social scraper.
+Live at <https://jasperbrumter.github.io/tour-gpx/>.
 
-**Set `SITE_URL` in production.** Without it the origin is derived from the
-`Host` header, which means anything that can reach the app can make it emit
-canonical URLs pointing at a domain you don't control — a way to get a copy of
-the site indexed instead of yours. The derived value exists so local
-development works with no configuration, not as the production path. The
-server logs a warning at startup when it is unset.
+### Why a static site can do this at all
 
-`app.set('trust proxy', true)` is on, so behind a TLS-terminating proxy the
-scheme comes from `X-Forwarded-Proto`. Only run it behind a proxy you control:
-that setting makes the app believe those headers.
+The conversion runs in the browser. That is only possible because
+`api.komoot.de` sends `Access-Control-Allow-Origin: *`, so a page on another
+origin may read a tour directly. `public/lib/` holds plain ES modules with no
+Node-specific dependencies, so the same code runs in the browser and under
+`server.js`.
 
-### What is served
+### The subpath trap
 
-| Path | Notes |
-| --- | --- |
-| `/` | Templated HTML, `Cache-Control: no-store` (the CSP nonce is per-request) |
-| `/index.html` | 301 to `/` — registered *before* the static middleware, which would otherwise serve the raw untemplated file |
-| `/robots.txt` | Allows everything except `/api/`, points at the sitemap |
-| `/sitemap.xml` | Single URL, `lastmod` from the mtime of `index.html` |
-| `/site.webmanifest` | Icons, theme colour, standalone display |
-| `/healthz` | Plain-text `ok` for uptime checks |
-| unknown paths | Real 404 (JSON under `/api/`, the app shell elsewhere) |
+Pages serves a project repo at `/tour-gpx/`, not at the domain root, so every
+root-absolute path (`/style.css`, `/fonts/…`) resolves to the wrong place and
+404s. All asset references are therefore **relative**.
 
-Because the HTML carries a per-request nonce it cannot be cached by a CDN. If
-you want edge caching more than you want the nonce, switch the JSON-LD block to
-a CSP hash and drop `no-store`.
+Note that the HTML and the CSS are separate problems. Fixing `index.html` and
+forgetting `style.css` leaves the page working but silently falling back to
+Arial, because only the `@font-face` URLs are broken — which is exactly what
+happened here the first time. Two tests now guard it, plus one that checks
+every referenced asset actually exists.
 
-### Regenerating images
+### What a static host cannot do
 
-`og-image.png`, `apple-touch-icon.png` and the manifest icons are rendered from
-`favicon.svg` and the site's own stylesheet with headless Chrome, so they can't
-drift from the design. `og-image.png` was generated while the fonts still came
-from Google; it is a static PNG, so it is unaffected, but a regeneration must
-now be done against the self-hosted faces. There is no build step — if you change `favicon.svg` or
-the palette, re-render them by hand.
+- **Short `komoot.com/s/…` share links.** Resolving one means reading that
+  page's HTML, and `www.komoot.com` sends no `Access-Control-Allow-Origin`
+  header, so the browser is not allowed to. The app detects these and tells the
+  user to open the link and copy the full address. `server.js` still handles
+  them properly, because a server is not bound by CORS.
+- **Response headers.** Pages sets its own and allows no additions, so the CSP
+  ships in a `<meta http-equiv>` tag instead. `frame-ancestors` is ignored in a
+  meta CSP and is the single directive lost by moving off a server. HSTS is
+  moot: `github.io` is HSTS-preloaded.
+- **Per-request values.** The canonical and Open Graph URLs are hardcoded, and
+  the inline JSON-LD is allowed by **hash** rather than a per-request nonce.
+  Change that block without recomputing the hash and it is silently blocked in
+  production, so `test/build-gpx.test.js` fails if the two drift — in
+  `index.html` or in `server.js`.
+
+### Self-hosting instead
+
+`server.js` still runs the whole thing on any Node host and is the better
+option if short share links matter: it serves the same `public/` tree, adds the
+real response headers, and keeps `POST /api/convert` for server-side
+conversion.
+
+    npm start
 
 ## Output compatibility
 

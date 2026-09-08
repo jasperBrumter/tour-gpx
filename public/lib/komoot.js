@@ -81,6 +81,40 @@ export function parseTourId(url) {
   return { tourId, shareToken };
 }
 
+/**
+ * Works out the tour from a pasted URL with NO network call, so it runs in the
+ * browser as well as on the server.
+ *
+ * Short komoot.com/s/… links can't be handled here: resolving one means
+ * reading that page's HTML, and www.komoot.com sends no
+ * Access-Control-Allow-Origin header, so a browser is not allowed to read the
+ * response. (api.komoot.de does send one, which is why the tour fetch itself
+ * works client-side.) Rather than let that surface as an opaque CORS failure,
+ * detect the case and say what to do about it. On the server,
+ * resolveShareLink() still handles these properly.
+ */
+export function tourFromUrl(rawUrl) {
+  if (TOUR_URL_RE.test(rawUrl)) return parseTourId(rawUrl);
+
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new SourceError('link_not_recognized', "That doesn't look like a valid URL.");
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new SourceError('link_not_recognized', "That doesn't look like a valid URL.");
+  }
+  if (!/komoot\.(com|de)$/i.test(parsed.hostname.replace(/^www\./, ''))) {
+    throw new SourceError('link_not_recognized', "That's not a komoot.com or komoot.de link.");
+  }
+
+  throw new SourceError(
+    'share_link_unsupported',
+    'Short Komoot share links can\'t be opened from the browser. Open the link first, then copy the full address — it looks like komoot.com/tour/123456789.'
+  );
+}
+
 /** One GET against the Komoot API, with the status-code -> SourceError mapping. */
 async function apiGet(pathname, { shareToken, params } = {}) {
   const url = new URL(API_BASE + pathname);
